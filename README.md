@@ -235,3 +235,9 @@ python3 -m unittest discover tests
 ├── requirements.txt            # Python dependencies
 └── README.md                   # Project documentation
 ```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
