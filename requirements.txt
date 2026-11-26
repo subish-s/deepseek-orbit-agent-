@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+selenium
+python-dotenv
+loguru
+httpx
+wasmtime

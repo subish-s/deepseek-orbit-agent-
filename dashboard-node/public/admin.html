@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin • DeepSeek Node Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg-secondary: #0c0f16;
+      --surface: #121620;
+      --border: rgba(255,255,255,0.08);
+      --accent: #6366f1;
+      --accent-light: #818cf8;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 32px;
+    }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+    .btn:hover { background: #1a1f2e; border-color: rgba(255,255,255,0.15); }
+    .btn.danger {
+      background: rgba(239,68,68,0.12);
+      border-color: rgba(239,68,68,0.35);
+      color: #fca5a5;
+    }
+    .btn.danger:hover { background: #ef4444; color: white; border-color: #ef4444; }
+    .btn.secondary { border-color: rgba(99,102,241,0.3); color: var(--accent-light); }
+    .btn.secondary:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+    }
+    .metric-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+      word-break: break-all;
+    }
+    .metric-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.65fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      height: 100%;
+    }
+    .panel-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 18px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-light);
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+    td {
+      padding: 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: top;
+    }
+    .status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status.success { background: rgba(16,185,129,0.15); color: #34d399; }
+    .status.failed, .status.error { background: rgba(239,68,68,0.15); color: #f87171; }
+
+    .console {
+      background: #05080d;
+      border: 1px solid #1f2738;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #34d399;
+      height: 280px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(7,9,14,0.96);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px -15px rgba(0,0,0,0.6);
+    }
+    .login-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .login-sub { text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 28px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent-light); margin-bottom: 7px; display: block; font-weight: 600; }
+    .form-input {
+      width: 100%;
+      background: #0a0d17;
+      border: 1px solid var(--border);
+      color: white;
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .error-text { color: #f87171; font-size: 13px; margin-top: 12px; text-align: center; display: none; }
+
+    .empty { color: #64748b; font-size: 13px; text-align: center; padding: 30px 0; }
+    .footer-note { margin-top: 20px; font-size: 12px; color: #64748b; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <div class="title">Admin Control Center</div>
+        <div class="subtitle">Node.js Dashboard • Real-time monitoring</div>
+      </div>
+      <div class="header-actions">
+        <button id="health-btn" class="btn secondary">Check Backend Health</button>
+        <button id="clear-btn" class="btn danger">Clear History</button>
+        <button id="logout-btn" class="btn">Logout</button>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics" id="metrics">
+      <div class="metric-card">
+        <div class="metric-label">Backend</div>
+        <div id="backend-url" class="metric-value" style="font-size:15px;">—</div>
+        <div id="backend-status" class="metric-sub">Checking...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Uptime</div>
+        <div id="uptime" class="metric-value">—</div>
+        <div class="metric-sub">Node process</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Memory</div>
+        <div id="memory" class="metric-value">—</div>
+        <div class="metric-sub">RSS / Heap</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Requests (session)</div>
+        <div id="req-count" class="metric-value">0</div>
+        <div class="metric-sub">In-memory history</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Request History -->
+      <div class="panel">
+        <div class="panel-title">📋 Request History <span style="font-size:11px;color:#64748b;font-weight:400;margin-left:auto;">Last 100</span></div>
+        <div style="max-height: 420px; overflow-y: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 155px;">Time</th>
+                <th>Prompt</th>
+                <th style="width: 78px;">Duration</th>
+                <th style="width: 88px;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr><td colspan="4" class="empty">No requests yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Server Info + Logs -->
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        <div class="panel">
+          <div class="panel-title">🖥️ Server Info</div>
+          <div id="server-info" style="font-size:13.5px; line-height:1.75; color:#cbd5e1;">
+            Loading...
+          </div>
+        </div>
+
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">📜 System Logs</div>
+          <div id="logs-console" class="console">Waiting for events...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Admin path: <code style="background:#11151f;padding:2px 6px;border-radius:4px;">/admin</code> • 
+      Changes require <code>ADMIN_USERNAME</code> + <code>ADMIN_PASSWORD</code> in .env / .env.local
+    </div>
+  </div>
+
+  <!-- Login Overlay -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-title">Admin Access</div>
+      <div class="login-sub">Sign in to view dashboard metrics and controls</div>
+
+      <div class="form-group">
+        <div class="form-label">Username</div>
+        <input id="username" class="form-input" type="text" value="admin" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Password</div>
+        <input id="password" class="form-input" type="password" placeholder="••••••••" />
+      </div>
+
+      <button id="login-btn" class="btn" style="width:100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color:white; border:none; font-weight:700; margin-top:8px;">Authenticate</button>
+      <div id="login-error" class="error-text">Invalid credentials</div>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('login-overlay');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const healthBtn = document.getElementById('health-btn');
+
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginError = document.getElementById('login-error');
+
+    let authToken = localStorage.getItem('admin_auth_token') || null;
+    let pollInterval = null;
+
+    function showLogin() {
+      overlay.style.display = 'flex';
+      passwordInput.focus();
+    }
+    function hideLogin() {
+      overlay.style.display = 'none';
+    }
+
+    async function performLogin() {
+      const u = usernameInput.value.trim();
+      const p = passwordInput.value.trim();
+      loginError.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          authToken = data.token;
+          localStorage.setItem('admin_auth_token', authToken);
+          hideLogin();
+          startDashboard();
+        } else {
+          loginError.style.display = 'block';
+        }
+      } catch (e) {
+        loginError.textContent = 'Connection failed';
+        loginError.style.display = 'block';
+      }
+    }
+
+    loginBtn.addEventListener('click', performLogin);
+    passwordInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') performLogin();
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('admin_auth_token');
+      authToken = null;
+      if (pollInterval) clearInterval(pollInterval);
+      location.reload();
+    });
+
+    // Clear history
+    clearBtn.addEventListener('click', async () => {
+      if (!confirm('Clear all in-memory request history?')) return;
+      try {
+        await fetch(`/api/admin/clear-history?auth=${authToken}`, { method: 'POST' });
+        loadStats(); // refresh immediately
+      } catch (e) {
+        alert('Failed to clear history');
+      }
+    });
+
+    // Health check
+    healthBtn.addEventListener('click', async () => {
+      const originalText = healthBtn.textContent;
+      healthBtn.textContent = 'Checking...';
+      healthBtn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/admin/health?auth=${authToken}`);
+        const data = await res.json();
+        const msg = `Status: ${data.status}\nBackend: ${data.backend_url}\nLatency: ${data.latency_ms || '?'}ms\n${data.error || ''}`;
+        alert(msg);
+      } catch (e) {
+        alert('Health check request failed');
+      }
+      healthBtn.textContent = originalText;
+      healthBtn.disabled = false;
+    });
+
+    async function loadStats() {
+      if (!authToken) return;
+
+      try {
+        const res = await fetch(`/api/admin/stats?auth=${authToken}`);
+        if (res.status === 401) {
+          localStorage.removeItem('admin_auth_token');
+          location.reload();
+          return;
+        }
+        const data = await res.json();
+
+        // Metrics
+        document.getElementById('backend-url').textContent = data.daily_session?.chat_url || '—';
+        document.getElementById('uptime').textContent = data.daily_session?.uptime_human || (data.daily_session?.uptime_seconds ? data.daily_session.uptime_seconds + 's' : '—');
+        
+        const mem = data.server_info || {};
+        document.getElementById('memory').textContent = mem.memory_rss_mb ? `${mem.memory_rss_mb} MB` : '—';
+
+        const reqs = data.request_history || [];
+        document.getElementById('req-count').textContent = reqs.length;
+
+        // History table
+        const tbody = document.getElementById('history-tbody');
+        if (reqs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="empty">No requests yet in this session</td></tr>`;
+        } else {
+          tbody.innerHTML = '';
+          reqs.slice(0, 30).forEach(r => {   // show last 30 in table
+            const tr = document.createElement('tr');
+            const statusClass = (r.status || '').toLowerCase().includes('success') ? 'success' : 'failed';
+            tr.innerHTML = `
+              <td style="font-family:JetBrains Mono,monospace;font-size:12px;color:#94a3b8;">${r.timestamp ? r.timestamp.slice(11,19) : ''}</td>
+              <td style="max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.prompt || ''}">${(r.prompt || '').slice(0,80)}</td>
+              <td style="font-family:JetBrains Mono,monospace;">${r.duration || 0}s</td>
+              <td><span class="status ${statusClass}">${r.status || '—'}</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        // Server info
+        const infoEl = document.getElementById('server-info');
+        infoEl.innerHTML = `
+          <strong>Port:</strong> ${data.server_info?.port || '?'}<br>
+          <strong>Backend:</strong> <span style="font-family:monospace;font-size:12px;">${data.daily_session?.chat_url || '—'}</span><br>
+          <strong>Node:</strong> ${data.daily_session?.node_version || '—'}<br>
+          <strong>Memory RSS:</strong> ${mem.memory_rss_mb || '?'} MB &nbsp;&nbsp; Heap: ${mem.memory_heap_mb || '?'} MB
+        `;
+
+        // Logs
+        const logsEl = document.getElementById('logs-console');
+        if (data.system_logs && data.system_logs.length) {
+          logsEl.textContent = data.system_logs.join('\n');
+          logsEl.scrollTop = logsEl.scrollHeight;
+        } else {
+          logsEl.textContent = 'No events recorded yet.';
+        }
+
+        // Auto update backend status pill
+        const statusEl = document.getElementById('backend-status');
+        statusEl.textContent = 'Connected';
+        statusEl.style.color = 'var(--success)';
+
+      } catch (err) {
+        console.error('Stats fetch error', err);
+      }
+    }
+
+    function startDashboard() {
+      hideLogin();
+      loadStats();
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(loadStats, 4000); // live updates
+    }
+
+    // Bootstrap
+    (function init() {
+      if (authToken) {
+        // quick validation
+        fetch(`/api/admin/stats?auth=${authToken}`)
+          .then(r => {
+            if (r.ok) {
+              startDashboard();
+            } else {
+              localStorage.removeItem('admin_auth_token');
+              showLogin();
+            }
+          })
+          .catch(() => showLogin());
+      } else {
+        showLogin();
+      }
+    })();
+
+    // Keyboard shortcut: press "?" to show login (if logged out)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '?' && overlay.style.display !== 'none') {
+        e.preventDefault();
+        showLogin();
+      }
+    });
+  </script>
+</body>
+</html>
+```

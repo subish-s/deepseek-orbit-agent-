@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orbit Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>window.DECK_BRIDGE = "proxy";</script>
+  <style>
+    :root {
+      --ink: #090b08;
+      --panel: #12160f;
+      --line: rgba(214, 255, 74, 0.22);
+      --lime: #d6ff4a;
+      --ice: #9be7ff;
+      --amber: #ffb020;
+      --text: #edf2e4;
+      --muted: #8d9780;
+      --danger: #ff5d4a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background:
+        radial-gradient(900px 420px at 10% -10%, rgba(214, 255, 74, 0.08), transparent 60%),
+        linear-gradient(180deg, #10140c, var(--ink));
+      color: var(--text);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    body::before {
+      content: "";
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(214, 255, 74, 0.05) 1px, transparent 1px);
+      background-size: 100% 4px;
+      mix-blend-mode: screen;
+      opacity: 0.35;
+    }
+    .shell { position: relative; max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; margin-bottom: 22px; }
+    .mark { font-family: Syne, sans-serif; font-weight: 800; letter-spacing: -0.04em; font-size: 42px; line-height: 0.9; }
+    .mark span { color: var(--lime); }
+    .sub { color: var(--muted); margin-top: 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .pill { border: 1px solid var(--line); padding: 8px 12px; color: var(--ice); font-size: 12px; }
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; }
+    .panel { background: rgba(18, 22, 15, 0.92); border: 1px solid var(--line); padding: 16px; }
+    label { display: block; color: var(--muted); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin: 12px 0 6px; }
+    textarea, input, select {
+      width: 100%;
+      background: #0b0e09;
+      color: var(--text);
+      border: 1px solid rgba(155, 231, 255, 0.25);
+      padding: 10px 12px;
+      font: inherit;
+    }
+    textarea { min-height: 140px; resize: vertical; }
+    .modes { display: flex; gap: 8px; }
+    .modes button, .go {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .modes button.on, .go { background: var(--lime); color: #12160a; border-color: var(--lime); font-weight: 500; }
+    .go { width: 100%; margin-top: 16px; }
+    .go:disabled { opacity: 0.55; cursor: wait; }
+    .note { color: var(--amber); font-size: 12px; line-height: 1.45; margin-top: 14px; }
+    .rail { display: flex; flex-direction: column; gap: 10px; min-height: 420px; }
+    .step { border-left: 3px solid var(--ice); padding: 10px 12px; background: #0c100b; }
+    .step.bad { border-color: var(--danger); }
+    .step.done { border-color: var(--lime); }
+    .step b { font-family: Syne, sans-serif; letter-spacing: 0.04em; }
+    pre { white-space: pre-wrap; word-break: break-word; margin: 8px 0 0; color: #d5dcc8; }
+    .lang { display: block; margin-top: 10px; color: var(--lime); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+    pre.code { white-space: pre; overflow-x: auto; word-break: normal; background: #070906; border: 1px solid rgba(155, 231, 255, 0.28); padding: 10px 12px; }
+    .answer { font-family: Syne, sans-serif; font-size: 22px; line-height: 1.25; }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      .mark { font-size: 34px; }
+      header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <div class="mark">ORBIT <span>DECK</span></div>
+        <div class="sub">Personal assistant and local code agent</div>
+      </div>
+      <div class="pill" id="provider">Checking link…</div>
+    </header>
+    <div class="grid">
+      <form class="panel" id="form">
+        <div class="modes">
+          <button type="button" id="mode-assist" class="on">Assist</button>
+          <button type="button" id="mode-agent">Agent</button>
+        </div>
+        <label for="token" id="token-label">Local bearer token</label>
+        <input id="token" type="password" autocomplete="off" placeholder="Stored in this tab only">
+        <label for="workspace" id="workspace-label">Project folder</label>
+        <input id="workspace" placeholder="Leave empty for this project">
+        <label for="steps">Step cap</label>
+        <input id="steps" type="number" min="1" max="12" value="8">
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt" required placeholder="Ask a question, or tell the agent what to find and fix."></textarea>
+        <button class="go" id="go" type="submit">Send</button>
+        <p class="note" id="note">Direct HTTPS using the saved account token. No API key. The token stays on this machine.</p>
+      </form>
+      <section class="panel rail" id="rail" aria-live="polite">
+        <div class="step"><b>Ready</b><pre>Assist answers in text. Agent reads the folder, edits code, runs the check, and stops at the step cap.</pre></div>
+      </section>
+    </div>
+  </div>
+  <script>
+    const bridge = window.DECK_BRIDGE || "proxy";
+    const tokenInput = document.getElementById("token");
+    const tokenLabel = document.getElementById("token-label");
+    if (bridge !== "direct") {
+      tokenInput.hidden = true;
+      tokenLabel.hidden = true;
+    } else {
+      tokenInput.value = sessionStorage.getItem("orbit_token") || "";
+    }
+    let mode = "assist";
+    const assistBtn = document.getElementById("mode-assist");
+    const agentBtn = document.getElementById("mode-agent");
+    const workspace = document.getElementById("workspace");
+    const steps = document.getElementById("steps");
+    const workspaceLabel = document.getElementById("workspace-label");
+    function setMode(next) {
+      mode = next;
+      assistBtn.classList.toggle("on", mode === "assist");
+      agentBtn.classList.toggle("on", mode === "agent");
+      const agent = mode === "agent";
+      workspace.hidden = !agent;
+      steps.hidden = !agent;
+      workspaceLabel.hidden = !agent;
+      steps.previousElementSibling.hidden = !agent;
+    }
+    assistBtn.onclick = () => setMode("assist");
+    agentBtn.onclick = () => setMode("agent");
+    setMode("assist");
+
+    function endpoint(kind) {
+      if (bridge === "direct") {
+        return kind === "agent" ? "/agent" : kind === "meta" ? "/meta" : "/chat";
+      }
+      return kind === "agent" ? "/api/agent" : kind === "meta" ? "/api/meta" : "/api/chat";
+    }
+    function headers() {
+      const value = { "Content-Type": "application/json" };
+      if (bridge === "direct" && tokenInput.value.trim()) {
+        value.Authorization = "Bearer " + tokenInput.value.trim();
+      }
+      return value;
+    }
+    async function loadMeta() {
+      try {
+        const res = await fetch(endpoint("meta"), { headers: headers() });
+        const data = await res.json();
+        const label = data.provider === "direct" ? "Direct HTTPS · saved account token" : "Link ready";
+        document.getElementById("provider").textContent = label;
+      } catch (err) {
+        document.getElementById("provider").textContent = "Link idle";
+      }
+    }
+    loadMeta();
+
+    function card(title, body, kind) {
+      const node = document.createElement("div");
+      node.className = "step" + (kind ? " " + kind : "");
+      const heading = document.createElement("b");
+      heading.textContent = title;
+      node.append(heading);
+      appendAnswer(node, body || "");
+      return node;
+    }
+    function appendAnswer(node, body) {
+      const fence = /```([^\n`]*)\n([\s\S]*?)```/g;
+      let last = 0;
+      let match;
+      let found = false;
+      while ((match = fence.exec(body)) !== null) {
+        found = true;
+        const before = body.slice(last, match.index).trim();
+        if (before) {
+          const prose = document.createElement("pre");
+          prose.textContent = before;
+          node.append(prose);
+        }
+        const lang = (match[1] || "").trim();
+        if (lang) {
+          const tag = document.createElement("span");
+          tag.className = "lang";
+          tag.textContent = lang;
+          node.append(tag);
+        }
+        const code = document.createElement("pre");
+        code.className = "code";
+        code.textContent = match[2].replace(/^\n+/, "").replace(/\s+$/, "");
+        node.append(code);
+        last = fence.lastIndex;
+      }
+      const tail = found ? body.slice(last).trim() : body;
+      if (tail) {
+        const prose = document.createElement("pre");
+        prose.textContent = tail;
+        node.append(prose);
+      }
+    }
+    document.getElementById("form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (bridge === "direct") sessionStorage.setItem("orbit_token", tokenInput.value.trim());
+      const go = document.getElementById("go");
+      const rail = document.getElementById("rail");
+      const prompt = document.getElementById("prompt").value.trim();
+      rail.replaceChildren(card(mode === "agent" ? "Agent running" : "Thinking", "Waiting for the model.", ""));
+      go.disabled = true;
+      try {
+        const payload = mode === "agent"
+          ? { prompt, workspace: workspace.value.trim(), max_steps: Number(steps.value || 8) }
+          : { prompt };
+        const res = await fetch(endpoint(mode), { method: "POST", headers: headers(), body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({ success: false, response: "Bad response" }));
+        rail.replaceChildren();
+        if (mode === "agent" && Array.isArray(data.steps)) {
+          data.steps.forEach((step) => {
+            rail.append(card(step.n + "  " + step.action, step.detail, step.ok ? (step.action === "done" ? "done" : "") : "bad"));
+          });
+        }
+        const text = data.summary || data.response || data.detail || "No reply";
+        rail.append(card(data.success ? "Result" : "Stopped", text, data.success ? "done" : "bad"));
+      } catch (err) {
+        rail.replaceChildren(card("Stopped", String(err), "bad"));
+      } finally {
+        go.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

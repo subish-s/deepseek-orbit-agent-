@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepSeek AI - Premium IDE Assistant</title>
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- marked v4 & highlight.js -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg-secondary: #0c0f16;
+      --surface: #121620;
+      --surface-hover: #161b27;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-accent: rgba(99, 102, 241, 0.15);
+      --accent: #6366f1;
+      --accent-light: #818cf8;
+      --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dark: #6b7280;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Grid Overlay background */
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-layout {
+      position: relative;
+      display: flex;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .auth-badge-box {
+      margin-top: auto;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .auth-badge-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .auth-badge-value {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-dot.active {
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+    .status-dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 10px var(--warning);
+    }
+
+    /* Main Chat Container */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+      position: relative;
+    }
+
+    .chat-header {
+      height: 70px;
+      padding: 0 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(7, 9, 14, 0.7);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .chat-header-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
+
+    /* Chat History */
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 32px 100px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Message Rows */
+    .message-row {
+      display: flex;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .message-row.user {
+      justify-content: flex-end;
+    }
+    .message-row.bot {
+      justify-content: flex-start;
+    }
+
+    /* User Message Style */
+    .user-message-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      max-width: 80%;
+    }
+
+    .message.user {
+      background: linear-gradient(135deg, #161a2b, #212642);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      color: var(--text);
+      padding: 12px 18px;
+      border-radius: 18px 18px 4px 18px;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    /* User Actions Bar Below Bubble */
+    .user-actions-container {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+      margin-right: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .user-action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .user-action-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Bot Cards Container */
+    .bot-cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+
+    /* General Premium Card */
+    .premium-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-premium);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .premium-card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .card-content {
+      padding: 18px 22px;
+      font-size: 14px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+
+    /* Paragraph and spacing defaults */
+    .card-content p {
+      margin: 0 0 12px 0;
+    }
+    .card-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* 1. Intro Card Style */
+    .card-intro {
+      background: rgba(18, 22, 32, 0.5);
+      backdrop-filter: blur(8px);
+    }
+
+    /* 2. Implementation Card Style */
+    .card-implementation {
+      background: #090d16;
+      border: 1px solid var(--border);
+    }
+
+    .code-toolbar {
+      height: 40px;
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f131f;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-language-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-light);
+      background: rgba(99, 102, 241, 0.1);
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .code-toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .action-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+    }
+    .action-icon-btn.run:hover {
+      color: var(--success);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .code-wrapper pre {
+      margin: 0;
+      padding: 16px 20px;
+      overflow-x: auto;
+    }
+
+    .code-wrapper code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      line-height: 1.55;
+    }
+
+    /* Interactive Code execution simulation container */
+    .simulated-terminal-container {
+      border-top: 1px solid var(--border);
+      background: #06090e;
+      max-height: 200px;
+      display: none;
+      flex-direction: column;
+    }
+    .simulated-terminal-header {
+      padding: 8px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dark);
+      background: #0a0d14;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.04);
+    }
+    .simulated-terminal-body {
+      padding: 12px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: var(--success);
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    /* 3. Output Preview Card Style */
+    .card-output {
+      border: 1px solid var(--border);
+      background: #05080d;
+    }
+
+    .terminal-header {
+      height: 38px;
+      padding: 0 16px;
+      background: #090e15;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .terminal-dots .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .terminal-dots .dot.red { background: #ef4444; }
+    .terminal-dots .dot.yellow { background: #f59e0b; }
+    .terminal-dots .dot.green { background: #10b981; }
+
+    .terminal-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .terminal-pulse {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    .terminal-body {
+      margin: 0;
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #34d399;
+      background: transparent;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    /* 4. Technical Notes Card Style */
+    .card-notes {
+      background: rgba(99, 102, 241, 0.02);
+      border: 1px solid var(--border-accent);
+      border-left: 4px solid var(--accent);
+    }
+
+    .card-header-label {
+      padding: 14px 22px 0 22px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-notes .card-content {
+      padding-top: 10px;
+      color: #d1d5db;
+    }
+
+    /* Custom styles for rendered markdown inside cards */
+    .card-content ul, .card-content ol {
+      margin: 8px 0 12px 18px;
+      padding: 0;
+    }
+    .card-content li {
+      margin-bottom: 6px;
+    }
+    .card-content li:last-child {
+      margin-bottom: 0;
+    }
+    .card-content code:not(.hljs) {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #f3f4f6;
+    }
+
+    /* CSS Tooltip System */
+    .tooltip-wrapper {
+      position: relative;
+      display: inline-flex;
+    }
+    .tooltip-wrapper::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%) scale(0.95);
+      background: #0c0f16;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f3f4f6;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+    }
+    .tooltip-wrapper:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* Chat Input Area */
+    .chat-input-area {
+      padding: 24px 32px 32px 32px;
+      background: linear-gradient(180deg, transparent, var(--bg) 40%);
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+    }
+
+    .input-box-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 10px 14px 10px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-premium);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .input-box-wrapper:focus-within {
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.08), var(--shadow-premium);
+    }
+
+    .chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 14.5px;
+      outline: none;
+      resize: none;
+      max-height: 120px;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+    .chat-input::placeholder {
+      color: var(--text-dark);
+    }
+
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--accent-gradient);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    .send-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+    }
+    .send-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Modal dialog styling */
+    .login-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: var(--shadow-premium);
+      text-align: center;
+    }
+
+    .login-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      margin: 0 0 8px 0;
+    }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: white;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent-gradient);
+      border: none;
+      color: white;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .login-error {
+      color: var(--error);
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .typing-loader {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .typing-dot {
+      width: 4px;
+      height: 4px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: blink 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="white" stroke-width="2.5" fill="none"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        </div>
+        <span class="brand-title">Antigravity AI</span>
+      </div>
+      
+      <div class="sidebar-section-title">Developer Console</div>
+      <a href="/console" style="display:block;margin:0 16px 16px;padding:10px 12px;border:1px solid rgba(155,231,255,0.35);color:#d6ff4a;text-decoration:none;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">Open Orbit agent</a>
+      
+      <div class="auth-badge-box">
+        <div class="auth-badge-title">CONNECTION GATEWAY</div>
+        <div class="auth-badge-value">
+          <span id="auth-state-dot" class="status-dot warning"></span>
+          <span id="auth-state-text">Authenticating...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="chat-container">
+      
+      <!-- Top Header -->
+      <div class="chat-header">
+        <div class="chat-header-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--accent-light)" stroke-width="2" fill="none"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          Console Session (Node.js)
+        </div>
+        <div class="header-actions">
+          <button id="header-login-btn" class="btn-secondary" onclick="showLoginModal()" style="display:none;">Sign in</button>
+          <div class="connection-status">
+            <span class="status-dot active"></span>
+            Connected
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable Chat Workspace -->
+      <div id="chat-history" class="chat-history"></div>
+
+      <!-- Bottom Chat Bar -->
+      <div class="chat-input-area">
+        <div class="input-box-wrapper">
+          <textarea id="chat-input" class="chat-input" placeholder="Inquire about algorithms, Python scripts, database schema..." rows="1"></textarea>
+          <button id="send-btn" class="send-btn" onclick="sendMessage()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Sign In Popup Dialog -->
+  <div id="login-modal" class="login-modal">
+    <div class="login-box">
+      <h3 class="login-title">Gateway Authentication</h3>
+      <div class="login-subtitle">Provide credentials to activate premium chat endpoints</div>
+      <input id="login-username" class="form-input" type="text" placeholder="Username" value="user">
+      <input id="login-password" class="form-input" type="password" placeholder="Password">
+      <button class="btn-primary" onclick="performLogin()">Authenticate</button>
+      <div id="login-error" class="login-error"></div>
+      <div style="margin-top:16px;">
+        <button onclick="hideLoginModal()" style="background:none;border:none;color:var(--text-dark);cursor:pointer;font-size:12px;text-decoration:underline;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chatHistory = document.getElementById('chat-history');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    // Load config injected by server
+    const DASHBOARD_CONFIG = window.DASHBOARD_CONFIG || { requireUserAuth: false };
+    let isAuthenticated = localStorage.getItem('node_dashboard_auth') === 'true';
+
+    function updateAuthStatus() {
+      const dot = document.getElementById('auth-state-dot');
+      const text = document.getElementById('auth-state-text');
+      const headerBtn = document.getElementById('header-login-btn');
+
+      if (!DASHBOARD_CONFIG.requireUserAuth) {
+        dot.className = 'status-dot active';
+        text.textContent = 'Active (Open Access)';
+        headerBtn.style.display = 'none';
+      } else {
+        if (isAuthenticated) {
+          dot.className = 'status-dot active';
+          text.textContent = 'Authenticated';
+          headerBtn.style.display = 'none';
+        } else {
+          dot.className = 'status-dot warning';
+          text.textContent = 'Auth Required';
+          headerBtn.style.display = 'block';
+        }
+      }
+    }
+    updateAuthStatus();
+
+    function showLoginModal() {
+      document.getElementById('login-modal').style.display = 'flex';
+      document.getElementById('login-error').style.display = 'none';
+    }
+    function hideLoginModal() {
+      document.getElementById('login-modal').style.display = 'none';
+    }
+
+    async function performLogin() {
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value.trim();
+      const err = document.getElementById('login-error');
+
+      try {
+        const res = await fetch('/api/user/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        if (res.ok) {
+          isAuthenticated = true;
+          localStorage.setItem('node_dashboard_auth', 'true');
+          hideLoginModal();
+          updateAuthStatus();
+          if (window.pendingPromptAfterLogin) {
+            const prompt = window.pendingPromptAfterLogin;
+            window.pendingPromptAfterLogin = null;
+            sendMessageDirect(prompt);
+          }
+        } else {
+          err.textContent = 'Invalid username or credentials';
+          err.style.display = 'block';
+        }
+      } catch (e) {
+        err.textContent = 'Gateway offline / auth failed';
+        err.style.display = 'block';
+      }
+    }
+
+    function appendMessage(text, sender) {
+      const row = document.createElement('div');
+      row.className = `message-row ${sender}`;
+
+      if (sender === 'user') {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'user-message-wrapper';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message user';
+        bubble.textContent = text;
+
+        wrapper.appendChild(bubble);
+
+        // Compact detached icons below the user bubble on the left
+        const actionsContainer = document.createElement('div');
+        actionsContainer.className = 'user-actions-container';
+        actionsContainer.innerHTML = `
+          <div class="tooltip-wrapper" data-tooltip="Copy query">
+            <button class="user-action-btn" onclick="copyUserMessage(\`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, this)">
+              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+          <div class="tooltip-wrapper" data-tooltip="Edit query">
+            <button class="user-action-btn" onclick="editUserMessage(\`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+          </div>
+          <div class="tooltip-wrapper" data-tooltip="Retry query">
+            <button class="user-action-btn" onclick="retryUserMessage(\`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+            </button>
+          </div>
+        `;
+        wrapper.appendChild(actionsContainer);
+        row.appendChild(wrapper);
+      } else {
+        const cardsContainer = document.createElement('div');
+        cardsContainer.className = 'bot-cards-container';
+        try {
+          cardsContainer.innerHTML = renderBotMessage(text);
+        } catch (e) {
+          console.error('Render error:', e);
+          cardsContainer.innerHTML = `<div class="premium-card card-intro"><div class="card-content">${text}</div></div>`;
+        }
+        row.appendChild(cardsContainer);
+      }
+
+      chatHistory.appendChild(row);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+
+      // Auto syntax highlight newly rendered code elements
+      row.querySelectorAll('pre code:not(.hljs)').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+
+      return row;
+    }
+
+    // Advanced Parser and Segmenter into Cards
+    function renderBotMessage(text) {
+      try {
+        const processed = preprocessResponse(text);
+        
+        // Split markdown by code blocks
+        const codeBlockRegex = /```([^\n`]*)\n([\s\S]*?)```/g;
+        let match;
+        let lastIndex = 0;
+        const parts = [];
+
+        while ((match = codeBlockRegex.exec(processed)) !== null) {
+          const textBefore = processed.slice(lastIndex, match.index).trim();
+          if (textBefore) {
+            parts.push({ type: 'text', content: textBefore });
+          }
+
+          const lang = (match[1] || 'code').trim().toLowerCase().replace(/[^a-z0-9_+#.-]/g, '') || 'code';
+          const rawCode = match[2];
+          const cleanedCode = cleanCodeBlock(lang, rawCode);
+          parts.push({ type: 'code', lang, content: cleanedCode });
+
+          lastIndex = codeBlockRegex.lastIndex;
+        }
+
+        const textAfter = processed.slice(lastIndex).trim();
+        if (textAfter) {
+          parts.push({ type: 'text', content: textAfter });
+        }
+
+        if (parts.length === 0) {
+          parts.push({ type: 'text', content: processed });
+        }
+
+        let htmlOutput = '';
+        let isIntro = true;
+
+        parts.forEach((part) => {
+          if (part.type === 'text') {
+            const textHtml = marked.parse(part.content);
+
+            if (isIntro) {
+              htmlOutput += `
+                <div class="premium-card card-intro">
+                  <div class="card-content">${textHtml}</div>
+                </div>
+              `;
+            } else {
+              // Notes & Explanations Card
+              htmlOutput += `
+                <div class="premium-card card-notes">
+                  <div class="card-header-label">
+                    <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Notes & Details
+                  </div>
+                  <div class="card-content">${textHtml}</div>
+                </div>
+              `;
+            }
+          } else if (part.type === 'code') {
+            isIntro = false;
+
+            const isOutput = ['text', 'output', 'stdout', 'console', 'terminal', 'shell', 'bash', 'logs', 'log'].includes(part.lang) ||
+                             part.content.includes('>>>') || part.content.includes('$ ') || part.content.startsWith('Traceback');
+
+            if (isOutput) {
+              // Output Preview Card
+              const escaped = part.content
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+              htmlOutput += `
+                <div class="premium-card card-output">
+                  <div class="terminal-header">
+                    <div class="terminal-dots">
+                      <span class="dot red"></span>
+                      <span class="dot yellow"></span>
+                      <span class="dot green"></span>
+                    </div>
+                    <div class="terminal-title">
+                      <span class="terminal-pulse"></span>
+                      Console Output (${part.lang})
+                    </div>
+                  </div>
+                  <pre class="terminal-body"><code>${escaped}</code></pre>
+                </div>
+              `;
+            } else {
+              // Implementation Card (Code block with Premium Toolbar)
+              const blockId = 'codeblock-' + Date.now() + Math.random().toString(36).slice(2);
+              const escapedCode = part.content
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+              htmlOutput += `
+                <div class="premium-card card-implementation">
+                  <div class="code-toolbar">
+                    <div class="code-language-badge">${part.lang || 'code'}</div>
+                    <div class="code-toolbar-actions">
+                      <div class="tooltip-wrapper" data-tooltip="Copy code">
+                        <button class="action-icon-btn" onclick="copyCode('${blockId}', this)">
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                      </div>
+                      <div class="tooltip-wrapper" data-tooltip="Download script">
+                        <button class="action-icon-btn" onclick="downloadCode('${blockId}', '${part.lang}', this)">
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
+                      </div>
+                      <div class="tooltip-wrapper" data-tooltip="Run execution">
+                        <button class="action-icon-btn run" onclick="simulatedRun('${blockId}', this)">
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="code-wrapper">
+                    <pre><code id="${blockId}" class="language-${part.lang}">${escapedCode}</code></pre>
+                  </div>
+                  
+                  <!-- Interactive Terminal drawer -->
+                  <div id="term-${blockId}" class="simulated-terminal-container">
+                    <div class="simulated-terminal-header">
+                      <span>CONSOLE LOG</span>
+                      <span style="cursor:pointer;" onclick="closeTerminal('${blockId}')">✕</span>
+                    </div>
+                    <div class="simulated-terminal-body">
+                      Running script environment...
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+          }
+        });
+
+        return htmlOutput;
+      } catch (err) {
+        console.error('renderBotMessage error:', err);
+        return `<div class="premium-card card-intro"><div class="card-content"><pre>${String(text || '').replace(/</g, '&lt;')}</pre></div></div>`;
+      }
+    }
+
+    // Cleans up output that starts with language badges copy-paste artifacts
+    function preprocessResponse(text) {
+      if (!text) return text;
+      let cleaned = text;
+      cleaned = cleaned.replace(
+        /(?:^|\n)(python|py|javascript|js|bash|shell|html|css|json|sql)\s*\n\s*Copy\s*\n\s*Download\s*\n/g,
+        (m, lang) => `\n\`\`\`${lang}\n`
+      );
+      cleaned = cleaned.replace(
+        /Here's a Python implementation of ([\w\s]+) with a detailed explanation:\s*\npython\s*\nCopy\s*\nDownload\s*\n/g,
+        (m, topic) => `Here's a Python implementation of ${topic} with a detailed explanation:\n\n\`\`\`python\n`
+      );
+
+      // Reduce common trailing "alternative version" spam that appears after code blocks
+      cleaned = cleaned.replace(
+        /\n+Alternative\s*[:\-]?\s*(Simple|Minimal|One[-\s]?Liner|Shorter|Another)[\s\S]{0,180}$/i,
+        ''
+      );
+      cleaned = cleaned.replace(
+        /\n+If you want a (minimal|simpler|shorter|one[-\s]?liner)[\s\S]{0,140}$/i,
+        ''
+      );
+      return cleaned;
+    }
+
+    // Strips unnecessary tutorial/explanatory comments from the start (and sometimes end) of code blocks.
+    // This directly addresses the user's complaint about "# Basic Addition Program", "# Method 1:", "Alternative: ..." etc.
+    function keepCode(code) {
+      return String(code || '').replace(/^\n+/, '').replace(/\s+$/, '');
+    }
+
+    function cleanCodeBlock(lang, code) {
+      if (!code) return '';
+      const l = (lang || '').toLowerCase();
+
+      // Only Python comments get the tutorial-line cleanup. Other languages,
+      // including their indentation, stay as the model wrote them.
+      if (l !== 'python' && l !== 'py') {
+        return keepCode(code);
+      }
+
+      let lines = code.split('\n');
+
+      // Drop leading blank lines
+      while (lines.length && lines[0].trim() === '') lines.shift();
+
+      // Keywords that almost always indicate LLM tutorial fluff at the top of code blocks
+      const fluffPattern = /(program|method\s*\d*|example\s*\d*|solution|alternative|basic|simple|minimal|one[-\s]?liner|addition|subtraction|multiplication|calculator|script|implementation|approach|step\s*\d*|version\s*\d*|here'?s?|below is|following is|detailed explanation|reusable function|main program)/i;
+
+      let startIdx = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const raw = lines[i];
+        const t = raw.trim();
+
+        if (t === '') {
+          // allow a few blank lines inside real code, but not at the very beginning
+          if (startIdx === i) startIdx = i + 1;
+          continue;
+        }
+
+        // Real Python code starters — stop stripping
+        if (/^(def |class |import |from |@|async def |if __name__|for |while |with |try:|lambda )/.test(t) ||
+            /^[a-zA-Z_][a-zA-Z0-9_]*\s*=/.test(t) ||
+            /^print\(|^return |^raise |^assert /.test(t)) {
+          break;
+        }
+
+        // Leading comment lines that are clearly tutorial fluff
+        if (t.startsWith('#')) {
+          const commentBody = t.slice(1).trim();
+          if (commentBody.length === 0) {
+            startIdx = i + 1;
+            continue;
+          }
+          if (fluffPattern.test(commentBody)) {
+            startIdx = i + 1;
+            continue;
+          }
+          // Very short or very generic top-level comments (common in LLM responses)
+          if (i < 12 && commentBody.length < 70) {
+            startIdx = i + 1;
+            continue;
+          }
+          // Stop at the first "real" code comment
+          break;
+        }
+
+        // Non-comment line that is not real code yet (rare) — keep stripping a little more
+        if (i < 8) {
+          startIdx = i + 1;
+          continue;
+        }
+
+        break;
+      }
+
+      let cleanedLines = lines.slice(startIdx);
+
+      // Remove trailing fluff comments that sometimes leak before the closing ```
+      while (cleanedLines.length > 0) {
+        const last = cleanedLines[cleanedLines.length - 1].trim();
+        if (last === '' ||
+            /^#\s*(alternative|note:|tip:|see also|for more|if you want|another way|one[-\s]?liner|minimal version)/i.test(last)) {
+          cleanedLines.pop();
+        } else {
+          break;
+        }
+      }
+
+      let result = keepCode(cleanedLines.join('\n'));
+
+      // Safety valve: if we over-stripped and removed almost all actual code, fall back to original
+      const realCodeLines = result.split('\n').filter(ln => {
+        const s = ln.trim();
+        return s && !s.startsWith('#');
+      }).length;
+
+      if (realCodeLines < 2) {
+        return keepCode(code);
+      }
+
+      return result;
+    }
+
+    function appendTyping() {
+      const row = document.createElement('div');
+      row.className = 'message-row bot';
+
+      const cardsContainer = document.createElement('div');
+      cardsContainer.className = 'bot-cards-container';
+      
+      const typingCard = document.createElement('div');
+      typingCard.className = 'premium-card card-intro';
+      typingCard.innerHTML = `
+        <div class="card-content">
+          <div class="typing-loader">
+            <span>Executing search & thinking</span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+      `;
+
+      cardsContainer.appendChild(typingCard);
+      row.appendChild(cardsContainer);
+      chatHistory.appendChild(row);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      return row;
+    }
+
+    async function sendMessage() {
+      const prompt = chatInput.value.trim();
+      if (!prompt) return;
+
+      chatInput.value = '';
+      appendMessage(prompt, 'user');
+
+      if (DASHBOARD_CONFIG.requireUserAuth && !isAuthenticated) {
+        appendMessage('🔒 Sign-in gateway authentication required. Initializing proxy...', 'bot');
+        window.pendingPromptAfterLogin = prompt;
+        showLoginModal();
+        return;
+      }
+
+      await sendMessageDirect(prompt);
+    }
+
+    async function sendMessageDirect(prompt) {
+      const loader = appendTyping();
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await res.json();
+        loader.remove();
+
+        if (data.success) {
+          appendMessage(data.response, 'bot');
+        } else {
+          appendMessage('Error processing request: ' + (data.response || 'Unknown internal response'), 'bot');
+        }
+      } catch (err) {
+        loader.remove();
+        appendMessage('API Bridge Error: ' + (err.message || 'Check terminal server status'), 'bot');
+      }
+    }
+
+    // User actions handlers
+    window.copyUserMessage = function(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" stroke="var(--success)" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        setTimeout(() => btn.innerHTML = original, 1500);
+      });
+    };
+
+    window.editUserMessage = function(text) {
+      chatInput.value = text;
+      chatInput.focus();
+    };
+
+    window.retryUserMessage = function(text) {
+      chatInput.value = text;
+      sendMessage();
+    };
+
+    // Code block tools: Copy
+    window.copyCode = function(blockId, btn) {
+      const codeEl = document.getElementById(blockId);
+      if (!codeEl) return;
+
+      navigator.clipboard.writeText(codeEl.innerText).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        setTimeout(() => btn.innerHTML = original, 1500);
+      });
+    };
+
+    // Code block tools: Download
+    window.downloadCode = function(blockId, lang, btn) {
+      const codeEl = document.getElementById(blockId);
+      if (!codeEl) return;
+
+      const ext = (lang === 'python' || lang === 'py') ? 'py' : 'txt';
+      const blob = new Blob([codeEl.innerText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `script.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // Code block tools: Simulated Execution
+    window.simulatedRun = function(blockId, btn) {
+      const term = document.getElementById(`term-${blockId}`);
+      if (!term) return;
+
+      term.style.display = 'flex';
+      const logBody = term.querySelector('.simulated-terminal-body');
+      logBody.innerHTML = '<span style="color:#6b7280;">Compiling environment...</span><br/>';
+
+      setTimeout(() => {
+        logBody.innerHTML += '<span style="color:#6366f1;">> Launching isolated process sandbox...</span><br/>';
+      }, 400);
+
+      setTimeout(() => {
+        logBody.innerHTML += '<span style="color:#f59e0b;">> Scanning dependencies and syntax... OK</span><br/>';
+      }, 800);
+
+      setTimeout(() => {
+        logBody.innerHTML += '<span style="color:#10b981;">> Execution complete. Exit code 0 (Success)</span><br/>';
+      }, 1200);
+    };
+
+    window.closeTerminal = function(blockId) {
+      const term = document.getElementById(`term-${blockId}`);
+      if (term) term.style.display = 'none';
+    };
+
+    // Input handlers
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Default Greeting
+    setTimeout(() => {
+      appendMessage("Welcome back. Connection gateway active. What script or architecture can I build for you today?", 'bot');
+    }, 400);
+  </script>
+</body>
+</html>

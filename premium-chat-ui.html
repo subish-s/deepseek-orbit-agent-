@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aether • AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+
+    :root {
+      --bg: #0a0c12;
+      --surface: #11141c;
+      --surface-2: #1a1f2e;
+      --border: #252a38;
+      --accent: #3b82f6;
+    }
+
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+      background: var(--bg);
+    }
+
+    .heading-font {
+      font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif;
+      font-feature-settings: "ss02";
+    }
+
+    .chat-container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .message-bubble {
+      max-width: 72%;
+      padding: 14px 18px;
+      border-radius: 20px;
+      font-size: 15px;
+      line-height: 1.55;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    .user-bubble {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      color: white;
+      box-shadow: 
+        0 8px 25px rgba(37, 99, 235, 0.35),
+        0 0 0 1px rgba(59, 130, 246, 0.2);
+      border-bottom-right-radius: 5px;
+    }
+
+    .ai-bubble {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+      border-bottom-left-radius: 5px;
+    }
+
+    .code-container {
+      background: #0f131b;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      margin: 12px 0;
+    }
+
+    .code-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: #161b24;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lang-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 9999px;
+      background: #1f2533;
+      color: #94a3b8;
+      letter-spacing: -.3px;
+    }
+
+    .action-icons {
+      display: flex;
+      gap: 4px;
+    }
+
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      border-radius: 8px;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 13.5px;
+    }
+
+    .action-btn:hover {
+      background-color: #1f2533;
+      color: #cbd5e1;
+    }
+
+    .message-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .user-row {
+      justify-content: flex-end;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+      justify-content: flex-end;
+      padding-right: 2px;
+    }
+
+    .user-action-btn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      border-radius: 6px;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+
+    .user-action-btn:hover {
+      background: #1f2533;
+      color: #94a3b8;
+    }
+
+    .premium-shadow {
+      box-shadow: 
+        0 10px 30px -15px rgb(0 0 0 / 0.4),
+        0 0 0 1px #1f2533;
+    }
+
+    .chat-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: #1f2533 transparent;
+    }
+  </style>
+</head>
+<body class="bg-[#0a0c12] text-slate-200">
+  <div class="min-h-screen flex items-center justify-center p-8">
+    <div class="w-full max-w-[820px]">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6 px-1">
+        <div class="flex items-center gap-x-3">
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
+            <i class="fa-solid fa-infinity text-white text-lg"></i>
+          </div>
+          <div>
+            <h1 class="heading-font text-2xl font-semibold tracking-tighter">Aether</h1>
+            <p class="text-xs text-slate-500 -mt-0.5">Premium</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-x-2 text-xs">
+          <div class="flex items-center gap-x-1.5 px-3 py-1.5 bg-[#11141c] border border-[#1f2533] rounded-2xl">
+            <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+            <span class="text-emerald-400 text-xs font-medium">Online</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Chat Card -->
+      <div class="bg-[#11141c] border border-[#1f2533] rounded-3xl overflow-hidden shadow-2xl premium-shadow">
+        
+        <!-- Chat Messages -->
+        <div class="p-8 space-y-9 max-h-[520px] overflow-y-auto chat-scroll">
+          
+          <!-- AI Message -->
+          <div class="flex justify-start">
+            <div class="max-w-[68%]">
+              <div class="flex items-center gap-x-2 mb-2 px-1">
+                <div class="w-6 h-6 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex-shrink-0"></div>
+                <span class="text-sm font-semibold text-slate-300">Aether</span>
+              </div>
+              <div class="ai-bubble px-5 py-3.5 text-[15px] leading-relaxed">
+                What would you like to build today?
+              </div>
+            </div>
+          </div>
+
+          <!-- User Message + Actions Below -->
+          <div class="flex justify-end">
+            <div class="w-full max-w-[68%]">
+              <div class="message-row user-row">
+                <div class="user-bubble px-5 py-3.5 text-[15px] leading-relaxed">
+                  Can you show me an optimized version of this sorting algorithm?
+                </div>
+              </div>
+              
+              <!-- Action icons directly below user bubble, right aligned -->
+              <div class="flex justify-end mt-1.5">
+                <div class="user-actions">
+                  <button class="user-action-btn" title="Regenerate response">
+                    <i class="fa-solid fa-sync-alt text-sm"></i>
+                  </button>
+                  <button class="user-action-btn" title="Edit message">
+                    <i class="fa-solid fa-pen text-sm"></i>
+                  </button>
+                  <button class="user-action-btn" title="Explain in detail">
+                    <i class="fa-solid fa-question text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Response with Premium Code Block -->
+          <div class="flex justify-start">
+            <div class="max-w-[78%]">
+              <div class="flex items-center gap-x-2 mb-2 px-1">
+                <div class="w-6 h-6 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex-shrink-0"></div>
+                <span class="text-sm font-semibold text-slate-300">Aether</span>
+              </div>
+              
+              <div class="ai-bubble px-5 py-4 text-[15px] leading-relaxed">
+                <p class="mb-4">Here's a highly optimized version using a hybrid approach:</p>
+                
+                <!-- Premium Code Block -->
+                <div class="code-container">
+                  <!-- Toolbar -->
+                  <div class="code-toolbar">
+                    <!-- Left: Language badge -->
+                    <div class="flex items-center">
+                      <div class="lang-badge text-xs font-semibold px-2.5 py-px tracking-tighter">Python</div>
+                    </div>
+                    
+                    <!-- Right: Icon actions -->
+                    <div class="action-icons">
+                      <button onclick="copyCode(this)" class="action-btn" title="Copy code">
+                        <i class="fa-solid fa-copy text-sm"></i>
+                      </button>
+                      <button onclick="downloadCode(this)" class="action-btn" title="Download file">
+                        <i class="fa-solid fa-download text-sm"></i>
+                      </button>
+                      <button onclick="runSnippet(this)" class="action-btn" title="Execute snippet">
+                        <i class="fa-solid fa-play text-sm"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Code -->
+                  <pre class="p-4 text-sm overflow-x-auto"><code class="language-python">def optimized_quicksort(arr):
+    if len(arr) &lt;= 1:
+        return arr
+    
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x &lt; pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x &gt; pivot]
+    
+    return optimized_quicksort(left) + middle + optimized_quicksort(right)</code></pre>
+                </div>
+                
+                <p class="mt-4 text-sm text-slate-400">This version uses a three-way partition to handle duplicates efficiently.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Another User Message -->
+          <div class="flex justify-end">
+            <div class="w-full max-w-[68%]">
+              <div class="message-row user-row">
+                <div class="user-bubble px-5 py-3.5 text-[15px] leading-relaxed">
+                  What about space complexity?
+                </div>
+              </div>
+              
+              <!-- Action icons below user bubble -->
+              <div class="flex justify-end mt-1.5">
+                <div class="user-actions">
+                  <button class="user-action-btn" title="Regenerate response">
+                    <i class="fa-solid fa-sync-alt text-sm"></i>
+                  </button>
+                  <button class="user-action-btn" title="Edit message">
+                    <i class="fa-solid fa-pen text-sm"></i>
+                  </button>
+                  <button class="user-action-btn" title="Explain in detail">
+                    <i class="fa-solid fa-question text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Input -->
+        <div class="border-t border-[#1f2533] bg-[#0f1118] p-4">
+          <div class="flex items-center gap-x-3 bg-[#1a1f2e] rounded-2xl px-5 py-2.5 border border-[#252a38]">
+            <input 
+              type="text" 
+              placeholder="Ask anything..." 
+              class="flex-1 bg-transparent text-sm placeholder:text-slate-500 focus:outline-none">
+            <button class="text-blue-400 hover:text-blue-300 transition-colors">
+              <i class="fa-solid fa-arrow-up text-lg"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const code = pre.innerText;
+      
+      navigator.clipboard.writeText(code).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i>`;
+        
+        setTimeout(() => {
+          btn.innerHTML = original;
+        }, 1800);
+      });
+    }
+
+    function downloadCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const code = pre.innerText;
+      const lang = btn.closest('.code-container').querySelector('.lang-badge').innerText.toLowerCase();
+      
+      const ext = lang.includes('python') ? 'py' : 'txt';
+      const blob = new Blob([code], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `snippet.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function runSnippet(btn) {
+      const codeContainer = btn.closest('.code-container');
+      const originalText = btn.innerHTML;
+      
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+      
+      setTimeout(() => {
+        btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i>`;
+        
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          
+          // Optional: Show a small toast
+          const toast = document.createElement('div');
+          toast.className = `absolute -top-8 right-0 text-xs bg-emerald-900 text-emerald-300 px-2.5 py-1 rounded-lg pointer-events-none`;
+          toast.textContent = 'Executed in sandbox';
+          codeContainer.style.position = 'relative';
+          codeContainer.appendChild(toast);
+          
+          setTimeout(() => toast.remove(), 1600);
+        }, 900);
+      }, 1200);
+    }
+
+    // Keyboard support for demo
+    document.addEventListener('keydown', function(e) {
+      if (e.metaKey && e.key === "Enter") {
+        const input = document.querySelector('input');
+        if (input && document.activeElement === input) {
+          // Simulate sending
+          input.value = '';
+        }
+      }
+    });
+
+    // Tailwind script
+    function initTailwind() {
+      // Already using CDN
+    }
+    
+    window.onload = initTailwind;
+  </script>
+</body>
+</html>
+```

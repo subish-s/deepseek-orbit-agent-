@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment & Secrets
+.env
+.env.local
+.env.*
+!.env.example
+
+# Sessions, Cookies & Auth State (NEVER commit)
+auth_session.json
+daily_session.json
+cookies/
+dashboard_app/cookies/
+dashboard_app/daily_session.json
+agent_sessions/
+completion_logs/
+dashboard_app/completion_logs/
+
+# Logs
+*.log
+automation.log
+dashboard_app/automation.log
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
